@@ -16,6 +16,7 @@
       const canvas = document.getElementById('canvas')
       const canvasContext = canvas.getContext('2d')
       const lines = []
+      const dpr = window.devicePixelRatio || 1;
 
       document.getElementById('clear').onclick = () => { 
         lines.length = 0
@@ -56,7 +57,7 @@
         canvasContext.clearRect(0, 0, canvas.width, canvas.height)
 
         if (backgroundImage) {
-          canvasContext.drawImage(backgroundImage, 0, 0)
+          canvasContext.drawImage(backgroundImage, 0, 0, backgroundImage.width / dpr, backgroundImage.height / dpr)
         }
 
         lines.forEach(line => {
@@ -102,9 +103,9 @@
           reader.onload = function(event) {
             backgroundImage = new Image()
             backgroundImage.onload = () => { 
-              canvas.width = backgroundImage.width
-              canvas.height = backgroundImage.height
-              canvasContext.drawImage(backgroundImage, 0, 0)
+              canvas.width = backgroundImage.width / dpr
+              canvas.height = backgroundImage.height / dpr
+              canvasContext.drawImage(backgroundImage, 0, 0, backgroundImage.width / dpr, backgroundImage.height / dpr)
             }
             backgroundImage.src = event.target.result
           }
