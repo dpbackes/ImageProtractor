@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+  <body>
+    <input type='button' id='clear' value='Clear Measurements' />
+    <div>
+      <canvas id='canvas' width='100' height='16' style="border: 1px solid red">
+        <img id='container' />
+      </canvas>
+    </div>
+    <script>
+      let current 
+      let backgroundImage
+
+      const canvas = document.getElementById('canvas')
+      const canvasContext = canvas.getContext('2d')
+      const lines = []
+
+      document.getElementById('clear').onclick = () => { 
+        lines.length = 0
+        redraw()
+      }
+
+      function drawText(text, x, y) {
+        canvasContext.font = '16px arial bold'
+
+        const measurement = canvasContext.measureText(text)
+
+        canvasContext.fillStyle = 'white'
+        canvasContext.textBaseline = 'top'
+        canvasContext.fillRect(x, y, measurement.width, 16)
+        canvasContext.fillStyle = 'red'
+        canvasContext.fillText(text, x, y)
+      }
+
+      function drawLine(x1, y1, x2, y2) {
+        canvasContext.strokeStyle = 'red'
+        canvasContext.lineWidth = 3
+
+        canvasContext.beginPath();
+        canvasContext.moveTo(x1, y1)
+        canvasContext.lineTo(x2, y2)
+        canvasContext.stroke()
+
+        const dx = x2 - x1
+        const dy = y2 - y1
+        const angle = Math.atan2(dy, dx) + Math.PI / 2
+        const text = (angle >= 0 ? angle : (2 * Math.PI + angle)) * 360 / (2 * Math.PI)
+        
+        drawText(`${text.toFixed(0)} deg`, x1, y1)
+        drawText(`${Math.hypot(dx, dy ).toFixed(2)} px`, x1, y1 + 16)
+      }
+
+      function redraw() {
+        canvasContext.clearRect(0, 0, canvas.width, canvas.height)
+
+        if (backgroundImage) {
+          canvasContext.drawImage(backgroundImage, 0, 0)
+        }
+
+        lines.forEach(line => {
+          drawLine(line.startX, line.startY, line.endX, line.endY)
+        })
+      }
+
+      canvas.onmousedown = function(e) {
+        current = {}
+
+        current.startX = e.clientX - canvas.offsetLeft
+        current.startY = e.clientY - canvas.offsetTop
+      }
+
+      canvas.onmousemove = function(e) {
+        if (!current) {
+          return
+        }
+
+        redraw()
+        current.endX = e.clientX - canvas.offsetLeft
+        current.endY = e.clientY - canvas.offsetTop
+        drawLine(current.startX, current.startY, current.endX, current.endY)
+      }
+
+      document.onmouseup = function(e) {
+        if (!current) {
+          return
+        }
+
+        lines.push(current)
+        current = null
+      }
+
+      document.onpaste = function(event) {
+        var items = (event.clipboardData || event.originalEvent.clipboardData).items;
+
+        var item = items[0]	
+        if (item.type.indexOf("image") === 0) {
+          var blob = item.getAsFile();
+
+          var reader = new FileReader();
+          reader.onload = function(event) {
+            backgroundImage = new Image()
+            backgroundImage.onload = () => { 
+              canvas.width = backgroundImage.width
+              canvas.height = backgroundImage.height
+              canvasContext.drawImage(backgroundImage, 0, 0)
+            }
+            backgroundImage.src = event.target.result
+          }
+
+          reader.readAsDataURL(blob)
+        };
+      }
+
+      drawText('Paste an image', 2, 0)
+    </script>
+  </body>
+</html>
